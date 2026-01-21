@@ -18,310 +18,432 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>我的極簡日記</title>
+    <title>我的雲端日記</title>
     <style>
-        /* --- 1. 基礎設定 --- */
         :root {
             --bg-color: #f4f4f4;
             --card-bg: #ffffff;
             --text-color: #333;
-            --accent-color: #5c7cfa; /* 連結與按鈕顏色 */
-            --sidebar-width: 250px;
+            --accent-color: #4a90e2;
+            --sidebar-width: 260px;
+            --border-color: #e0e0e0;
         }
 
         body {
-            font-family: "Helvetica Neue", Helvetica, Arial, "Microsoft JhengHei", sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
             background-color: var(--bg-color);
             color: var(--text-color);
             margin: 0;
             padding: 0;
-            line-height: 1.6;
-        }
-
-        /* --- 2. 版面配置 (Flexbox) --- */
-        .container {
-            max-width: 1000px;
-            margin: 40px auto;
+            height: 100vh;
             display: flex;
-            gap: 30px;
+            flex-direction: column;
+        }
+
+        /* 頂部導航 */
+        header {
+            background: var(--card-bg);
             padding: 0 20px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--border-color);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            z-index: 10;
         }
 
-        /* 左側：日記內容區 */
+        h1 { font-size: 1.2rem; margin: 0; }
+
+        .header-actions button {
+            padding: 8px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            margin-left: 10px;
+            transition: 0.2s;
+        }
+
+        .btn-primary { background: var(--accent-color); color: white; }
+        .btn-primary:hover { background: #357abd; }
+        .btn-secondary { background: #eee; color: #555; }
+        .btn-secondary:hover { background: #ddd; }
+
+        /* 主佈局 */
+        .container {
+            display: flex;
+            flex: 1;
+            overflow: hidden; /* 防止整頁捲動 */
+        }
+
+        /* 左側內容區 */
         .main-content {
-            flex: 1; /* 佔據剩餘空間 */
-            min-width: 0; /* 防止內容溢出 */
+            flex: 1;
+            padding: 30px;
+            overflow-y: auto; /* 只有內容區捲動 */
+            position: relative;
         }
 
-        /* 右側：側邊欄目錄 */
+        /* 右側側邊欄 */
         .sidebar {
             width: var(--sidebar-width);
-            flex-shrink: 0;
-        }
-
-        /* 固定側邊欄效果 */
-        .sidebar-sticky {
-            position: sticky;
-            top: 40px;
-        }
-
-        /* --- 3. 元件樣式 --- */
-        
-        /* 網站標題 */
-        header {
-            text-align: center;
-            padding: 40px 0;
             background: var(--card-bg);
-            margin-bottom: 20px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            border-left: 1px solid var(--border-color);
+            overflow-y: auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
         }
-        
-        h1 { margin: 0; font-size: 1.8rem; color: #444; }
-        .subtitle { color: #888; font-size: 0.9rem; margin-top: 5px; }
 
-        /* 日記卡片 */
-        .diary-entry {
+        /* 編輯器樣式 */
+        #editor-panel {
+            display: none; /* 預設隱藏 */
             background: var(--card-bg);
             padding: 30px;
-            margin-bottom: 25px;
             border-radius: 8px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-            transition: transform 0.2s;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            max-width: 800px;
+            margin: 0 auto;
         }
 
-        .diary-entry:hover {
-            transform: translateY(-2px);
-        }
-
-        .entry-meta {
-            font-size: 0.85rem;
-            color: #999;
-            margin-bottom: 10px;
-            display: flex;
-            justify-content: space-between;
-        }
-
-        .entry-category {
-            background: #eee;
-            padding: 2px 8px;
-            border-radius: 4px;
-            color: #555;
-            font-size: 0.75rem;
-        }
-
-        .entry-title {
-            margin: 0 0 15px 0;
-            font-size: 1.5rem;
-            color: #222;
-        }
-
-        .entry-content {
-            white-space: pre-wrap; /* 保留換行格式 */
-            text-align: justify;
-        }
-
-        /* 側邊欄樣式 */
-        .category-list {
-            list-style: none;
-            padding: 0;
-            background: var(--card-bg);
-            border-radius: 8px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-            overflow: hidden;
-        }
-
-        .category-list li {
-            border-bottom: 1px solid #eee;
-        }
-
-        .category-list li:last-child { border-bottom: none; }
-
-        .category-btn {
-            display: block;
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 5px; font-weight: bold; font-size: 0.9rem; }
+        .form-control {
             width: 100%;
-            padding: 15px 20px;
-            text-align: left;
-            background: none;
-            border: none;
-            cursor: pointer;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
             font-size: 1rem;
-            color: #555;
-            transition: background 0.2s;
+            box-sizing: border-box;
+            font-family: inherit;
+        }
+        textarea.form-control { height: 300px; resize: vertical; line-height: 1.6; }
+
+        /* 日記列表樣式 */
+        .diary-list { max-width: 800px; margin: 0 auto; }
+        
+        .diary-card {
+            background: var(--card-bg);
+            padding: 25px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            position: relative;
         }
 
-        .category-btn:hover {
-            background-color: #f9f9f9;
-            color: var(--accent-color);
+        .diary-date { color: #888; font-size: 0.85rem; margin-bottom: 8px; }
+        .diary-title { margin: 0 0 15px 0; font-size: 1.5rem; color: #222; }
+        .diary-body { white-space: pre-wrap; line-height: 1.8; color: #444; }
+        
+        .card-actions {
+            margin-top: 20px;
+            padding-top: 15px;
+            border-top: 1px solid #eee;
+            text-align: right;
         }
-
-        .category-btn.active {
-            background-color: var(--accent-color);
-            color: white;
+        .btn-small {
+            background: none; border: none; color: #888; cursor: pointer; font-size: 0.85rem; margin-left: 10px;
         }
+        .btn-small:hover { color: var(--accent-color); }
+        .btn-delete:hover { color: #e74c3c; }
 
-        .sidebar-title {
-            font-size: 1.1rem;
-            margin-bottom: 15px;
-            color: #444;
-            font-weight: bold;
-            border-left: 4px solid var(--accent-color);
-            padding-left: 10px;
+        /* 側邊欄樹狀目錄 */
+        .tree-nav ul { list-style: none; padding-left: 15px; }
+        .tree-nav > ul { padding-left: 0; }
+        .tree-nav li { margin: 5px 0; }
+        
+        .tree-year { font-weight: bold; cursor: pointer; color: #333; padding: 5px 0; display: block; }
+        .tree-month { color: #555; cursor: pointer; padding: 3px 0; display: block; }
+        .tree-day { 
+            color: #777; cursor: pointer; font-size: 0.9rem; 
+            padding: 2px 0; display: block; text-decoration: none;
+            transition: color 0.2s;
         }
+        .tree-day:hover { color: var(--accent-color); }
+        
+        /* 展開/收合圖示 */
+        .toggle-icon::before { content: '▸ '; color: #999; display: inline-block; width: 15px;}
+        .open > .toggle-icon::before { content: '▾ '; }
+        .hidden { display: none; }
 
-        /* 手機版響應式 */
+        /* 手機版 */
         @media (max-width: 768px) {
-            .container {
-                flex-direction: column-reverse; /* 手機版把目錄放到上面 */
-            }
-            .sidebar {
-                width: 100%;
-            }
-            .sidebar-sticky {
-                position: static;
-            }
+            .container { flex-direction: column-reverse; }
+            .sidebar { width: 100%; height: 200px; border-left: none; border-top: 1px solid var(--border-color); }
+            header h1 { font-size: 1rem; }
         }
     </style>
 </head>
 <body>
 
     <header>
-        <h1>我的靜謐日記</h1>
-        <div class="subtitle">紀錄生活，整理思緒</div>
+        <h1>我的日記</h1>
+        <div class="header-actions">
+            <button class="btn-secondary" onclick="exportData()">匯出備份</button>
+            <button class="btn-primary" onclick="showEditor()">+ 新日記</button>
+        </div>
     </header>
 
     <div class="container">
         <!-- 左側：主要內容 -->
-        <main class="main-content" id="diary-container">
-            <!-- 日記會透過 JavaScript 自動插入這裡 -->
+        <main class="main-content" id="main-view">
+            <!-- 編輯器面板 -->
+            <div id="editor-panel">
+                <h2 id="editor-title-text">寫日記</h2>
+                <input type="hidden" id="edit-id">
+                <div class="form-group">
+                    <label>日期</label>
+                    <input type="date" id="inp-date" class="form-control">
+                </div>
+                <div class="form-group">
+                    <label>標題</label>
+                    <input type="text" id="inp-title" class="form-control" placeholder="今天發生了什麼事？">
+                </div>
+                <div class="form-group">
+                    <label>內容</label>
+                    <textarea id="inp-content" class="form-control" placeholder="開始書寫..."></textarea>
+                </div>
+                <div style="text-align: right;">
+                    <button class="btn-secondary" onclick="cancelEdit()">取消</button>
+                    <button class="btn-primary" onclick="saveDiary()">儲存日記</button>
+                </div>
+            </div>
+
+            <!-- 日記列表顯示區 -->
+            <div id="diary-list" class="diary-list">
+                <!-- 內容由 JS 生成 -->
+            </div>
         </main>
 
         <!-- 右側：側邊欄 -->
         <aside class="sidebar">
-            <div class="sidebar-sticky">
-                <div class="sidebar-title">分類目錄</div>
-                <ul class="category-list" id="category-list">
-                    <!-- 分類按鈕會自動插入這裡 -->
-                </ul>
-            </div>
+            <div style="margin-bottom: 10px; font-weight: bold; color: #888; font-size: 0.8rem;">時間軸</div>
+            <nav class="tree-nav" id="sidebar-nav">
+                <!-- 目錄由 JS 生成 -->
+            </nav>
         </aside>
     </div>
 
     <script>
-        // ==========================================
-        // 1. 在這裡寫日記 (資料區)
-        // ==========================================
-        const diaries = [
-            {
-                id: 1,
-                date: "2024-01-21",
-                category: "生活感悟",
-                title: "建立網站的第一天",
-                content: "今天我決定用最簡單的方式建立一個日記網站。\n\n不需要複雜的資料庫，只需要一個 HTML 檔案。這樣我可以專注在寫作本身，而不是除錯程式碼。\n\n感覺非常清爽！"
-            },
-            {
-                id: 2,
-                date: "2024-01-20",
-                category: "技術筆記",
-                title: "學習 JavaScript",
-                content: "JavaScript 陣列的 filter 和 map 方法真的很好用，可以用來處理這些日記資料。\n\n只要把資料結構設計好，渲染畫面其實很快。"
-            },
-            {
-                id: 3,
-                date: "2024-01-19",
-                category: "生活感悟",
-                title: "喝咖啡",
-                content: "下午去了一間新的咖啡廳，拿鐵的奶泡很綿密。\n帶了一本書去看，度過了一個愜意的午後。"
-            },
-            {
-                id: 4,
-                date: "2024-01-18",
-                category: "美食紀錄",
-                title: "晚餐吃拉麵",
-                content: "豚骨湯頭非常濃郁，叉燒也很軟嫩。\n下次要記得加點溏心蛋。"
+        // --- 1. 資料管理 ---
+        let diaries = [];
+
+        // 初始化：從 LocalStorage 讀取資料
+        function init() {
+            const storedData = localStorage.getItem('my_diary_data');
+            if (storedData) {
+                diaries = JSON.parse(storedData);
             }
-        ];
+            renderSidebar();
+            renderList(); // 預設顯示全部
+        }
 
-        // ==========================================
-        // 2. 程式邏輯區 (不需要修改)
-        // ==========================================
-        
-        const diaryContainer = document.getElementById('diary-container');
-        const categoryList = document.getElementById('category-list');
+        // 儲存到 LocalStorage
+        function persist() {
+            localStorage.setItem('my_diary_data', JSON.stringify(diaries));
+            renderSidebar();
+            renderList();
+        }
 
-        // 渲染日記列表
-        function renderDiaries(filterCategory = '全部') {
-            diaryContainer.innerHTML = ''; // 清空內容
+        // --- 2. 編輯器功能 ---
+        const editorPanel = document.getElementById('editor-panel');
+        const diaryList = document.getElementById('diary-list');
+        const inpDate = document.getElementById('inp-date');
+        const inpTitle = document.getElementById('inp-title');
+        const inpContent = document.getElementById('inp-content');
+        const editId = document.getElementById('edit-id');
 
-            const filteredData = filterCategory === '全部' 
-                ? diaries 
-                : diaries.filter(d => d.category === filterCategory);
+        function showEditor(id = null) {
+            editorPanel.style.display = 'block';
+            diaryList.style.display = 'none';
+            
+            if (id) {
+                // 編輯模式
+                const entry = diaries.find(d => d.id === id);
+                if (entry) {
+                    editId.value = entry.id;
+                    inpDate.value = entry.date;
+                    inpTitle.value = entry.title;
+                    inpContent.value = entry.content;
+                    document.getElementById('editor-title-text').innerText = "編輯日記";
+                }
+            } else {
+                // 新增模式
+                editId.value = '';
+                inpDate.value = new Date().toISOString().split('T')[0]; // 預設今天
+                inpTitle.value = '';
+                inpContent.value = '';
+                document.getElementById('editor-title-text').innerText = "新日記";
+            }
+        }
 
-            if (filteredData.length === 0) {
-                diaryContainer.innerHTML = '<div class="diary-entry"><p>此分類尚無日記。</p></div>';
+        function cancelEdit() {
+            editorPanel.style.display = 'none';
+            diaryList.style.display = 'block';
+        }
+
+        function saveDiary() {
+            const date = inpDate.value;
+            const title = inpTitle.value.trim();
+            const content = inpContent.value;
+            const id = editId.value;
+
+            if (!date || !title) {
+                alert('請填寫日期與標題');
                 return;
             }
 
-            filteredData.forEach(diary => {
-                const html = `
-                    <article class="diary-entry">
-                        <div class="entry-meta">
-                            <span>${diary.date}</span>
-                            <span class="entry-category"># ${diary.category}</span>
-                        </div>
-                        <h2 class="entry-title">${diary.title}</h2>
-                        <div class="entry-content">${diary.content}</div>
-                    </article>
-                `;
-                diaryContainer.innerHTML += html;
-            });
-        }
-
-        // 渲染側邊欄分類
-        function renderCategories() {
-            // 取得所有不重複的分類
-            const categories = ['全部', ...new Set(diaries.map(d => d.category))];
-
-            categories.forEach(cat => {
-                const li = document.createElement('li');
-                const btn = document.createElement('button');
-                btn.className = 'category-btn';
-                if (cat === '全部') btn.classList.add('active');
-                btn.textContent = cat;
-                
-                btn.onclick = () => {
-                    // 移除所有 active 樣式
-                    document.querySelectorAll('.category-btn').forEach(b => b.classList.remove('active'));
-                    // 加上當前 active
-                    btn.classList.add('active');
-                    // 重新渲染日記
-                    renderDiaries(cat);
-                    // 手機版點擊後自動滾動到頂部
-                    if(window.innerWidth < 768) {
-                        window.scrollTo({top: 0, behavior: 'smooth'});
-                    }
+            if (id) {
+                // 更新現有
+                const index = diaries.findIndex(d => d.id == id);
+                if (index !== -1) {
+                    diaries[index] = { ...diaries[index], date, title, content };
+                }
+            } else {
+                // 新增
+                const newEntry = {
+                    id: Date.now(), // 使用時間戳當 ID
+                    date,
+                    title,
+                    content
                 };
+                diaries.push(newEntry);
+            }
 
-                li.appendChild(btn);
-                categoryList.appendChild(li);
+            // 排序：日期新的在上面
+            diaries.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+            persist();
+            cancelEdit();
+        }
+
+        function deleteDiary(id) {
+            if(confirm('確定要刪除這篇日記嗎？')) {
+                diaries = diaries.filter(d => d.id !== id);
+                persist();
+            }
+        }
+
+        // --- 3. 渲染列表 ---
+        function renderList(filterFn = null) {
+            diaryList.innerHTML = '';
+            
+            let displayData = diaries;
+            if (filterFn) {
+                displayData = diaries.filter(filterFn);
+            }
+
+            if (displayData.length === 0) {
+                diaryList.innerHTML = '<div style="text-align:center; color:#999; margin-top:50px;">沒有日記資料</div>';
+                return;
+            }
+
+            displayData.forEach(d => {
+                const card = document.createElement('div');
+                card.className = 'diary-card';
+                card.innerHTML = `
+                    <div class="diary-date">${d.date}</div>
+                    <h2 class="diary-title">${d.title}</h2>
+                    <div class="diary-body">${d.content}</div>
+                    <div class="card-actions">
+                        <button class="btn-small" onclick="showEditor(${d.id})">編輯</button>
+                        <button class="btn-small btn-delete" onclick="deleteDiary(${d.id})">刪除</button>
+                    </div>
+                `;
+                diaryList.appendChild(card);
             });
         }
 
-        // 初始化
-        renderCategories();
-        renderDiaries();
+        // --- 4. 渲染側邊欄 (年/月/日) ---
+        function renderSidebar() {
+            const nav = document.getElementById('sidebar-nav');
+            nav.innerHTML = '';
+
+            // 建立樹狀結構
+            const tree = {};
+            diaries.forEach(d => {
+                const [y, m, day] = d.date.split('-');
+                if (!tree[y]) tree[y] = {};
+                if (!tree[y][m]) tree[y][m] = [];
+                tree[y][m].push(d);
+            });
+
+            const ulYear = document.createElement('ul');
+
+            // 年份排序 (大到小)
+            Object.keys(tree).sort((a,b) => b-a).forEach(year => {
+                const liYear = document.createElement('li');
+                liYear.innerHTML = `<span class="tree-year toggle-icon" onclick="toggle(this)">${year}年</span>`;
+                
+                const ulMonth = document.createElement('ul');
+                ulMonth.className = 'hidden'; // 預設收合
+
+                // 月份排序 (大到小)
+                Object.keys(tree[year]).sort((a,b) => b-a).forEach(month => {
+                    const liMonth = document.createElement('li');
+                    liMonth.innerHTML = `<span class="tree-month toggle-icon" onclick="toggle(this)">${month}月</span>`;
+                    
+                    const ulDay = document.createElement('ul');
+                    ulDay.className = 'hidden';
+
+                    // 日期排序
+                    tree[year][month].forEach(entry => {
+                        const liDay = document.createElement('li');
+                        // 點擊日期：只顯示該篇日記
+                        liDay.innerHTML = `<a class="tree-day" href="#" onclick="filterById(${entry.id})">${entry.date.split('-')[2]}日 - ${entry.title}</a>`;
+                        ulDay.appendChild(liDay);
+                    });
+
+                    liMonth.appendChild(ulDay);
+                    ulMonth.appendChild(liMonth);
+                });
+
+                liYear.appendChild(ulMonth);
+                ulYear.appendChild(liYear);
+            });
+
+            nav.appendChild(ulYear);
+        }
+
+        // 側邊欄展開收合
+        function toggle(el) {
+            el.parentElement.classList.toggle('open');
+            const nextUl = el.nextElementSibling;
+            if (nextUl) {
+                nextUl.classList.toggle('hidden');
+            }
+        }
+
+        // 側邊欄篩選功能
+        function filterById(id) {
+            renderList(d => d.id === id);
+            // 手機版自動捲動
+            if(window.innerWidth < 768) {
+                window.scrollTo({top: 0, behavior: 'smooth'});
+            }
+        }
+
+        // --- 5. 匯出備份 ---
+        function exportData() {
+            const dataStr = JSON.stringify(diaries, null, 2);
+            const blob = new Blob([dataStr], {type: "application/json"});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `diary_backup_${new Date().toISOString().split('T')[0]}.json`;
+            a.click();
+        }
+
+        // 啟動
+        init();
 
     </script>
 </body>
 </html>
 
 							<script>
-                            	{
-        id: 5, // 編號隨意，不重複即可
-        date: "2024-01-22",
-        category: "心情",
-        title: "新的日記標題",
-        content: "這裡是內容，如果要換行\n直接打反斜線n即可。"
-    },
+                            	
 							</script>
                         </body>
                         </html>
